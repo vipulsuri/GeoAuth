@@ -24,10 +24,28 @@ function App() {
         body: JSON.stringify({ address, specialty }),
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        const isHtml = responseText.trim().startsWith('<');
+        let detailedError = `Server returned an invalid response. Status Code: ${response.status}. `;
+        
+        if (response.status === 404 && isHtml) {
+          detailedError += "Vercel returned a 404 Not Found page. This means Vercel isn't routing the request to the backend correctly. Make sure your 'Root Directory' setting in the Vercel dashboard is left BLANK (do not set it to 'frontend').";
+        } else if (response.status === 500 && isHtml) {
+          detailedError += "Vercel returned a 500 Internal Server Error page. This usually means the backend crashed or failed to connect to the database. Check your Vercel Function Logs for details.";
+        } else {
+          detailedError += `Response preview: ${responseText.substring(0, 150)}...`;
+        }
+        
+        throw new Error(detailedError);
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch referrals');
+        throw new Error(data.error || `Server returned error code ${response.status}`);
       }
 
       setResults(data);
@@ -85,8 +103,16 @@ function App() {
         )}
 
         {error && (
-          <div className="error-message" style={{ marginTop: '2rem' }}>
-            {error}
+          <div className="error-message" style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '0.75rem', border: '1px solid #f87171', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              Oops! Something went wrong
+            </div>
+            <p style={{ margin: 0, lineHeight: '1.6', fontSize: '0.95rem' }}>{error}</p>
           </div>
         )}
 
