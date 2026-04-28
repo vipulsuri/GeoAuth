@@ -127,7 +127,10 @@ async function getReferrals(req, res) {
 
   } catch (error) {
     console.error('Error in getReferrals:', error);
-    res.status(500).json({ error: 'Internal server error while processing referrals.' });
+    res.status(500).json({ 
+      error: 'Internal server error while processing referrals.',
+      details: error.message || String(error)
+    });
   }
 }
 
