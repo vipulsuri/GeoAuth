@@ -45,7 +45,8 @@ function App() {
       }
 
       if (!response.ok) {
-        throw new Error(data.error || `Server returned error code ${response.status}`);
+        const errorMsg = data.details ? `${data.error} Details: ${data.details}` : data.error;
+        throw new Error(errorMsg || `Server returned error code ${response.status}`);
       }
 
       setResults(data);
